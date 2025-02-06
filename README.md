@@ -82,36 +82,11 @@ export default defineConfig({
 });
 ```
 
-## Expanding the ESLint configuration
+## 4. Código Fuente
+### 4.1. Archivo de entrada y enrutado
+Revisar los archivos en el siguiente orden:
+- **src/main.tsx** 
+- **src/App.tsx** : En este archivo se define el enrutado y se incorpora el menú de navegación.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+### 4.2. Componente de Navegación
+- **src/components/Navbar.tsx**: Utilizamos el componente Menubar de PrimeReact para el menú de navegación.
