@@ -7,12 +7,17 @@ import { Dialog } from 'primereact/dialog';
 import { InputText } from 'primereact/inputtext';
 import { Toast } from 'primereact/toast';
 import { usuarioService } from '../services/usuarioService';
-import { Usuario } from '../types/types';
+import { Rol, Usuario } from '../types/types';
+import { Dropdown } from 'primereact/dropdown';
+import { rolService } from '../services/rolService';
 
 const Usuarios: React.FC = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [displayDialog, setDisplayDialog] = useState(false);
   const [editingUsuario, setEditingUsuario] = useState<Partial<Usuario>>({});
+  const [roles, setRoles] = useState<Rol[]>([]);
+  const [selectedRole, setSelectedRole] = useState<Rol | null>(null);
+  const [displayRoleDialog, setDisplayRoleDialog] = useState(false);
   const toast = useRef<Toast>(null);
 
   const loadUsuarios = async () => {
@@ -95,25 +100,30 @@ const Usuarios: React.FC = () => {
     }
   };
 
-  const assignRole = async (usuarioId: number, roleId: number) => {
+  const openRoleDialog = async (usuario: Usuario) => {
+    setEditingUsuario(usuario);
     try {
-      await usuarioService.assignRole(usuarioId, roleId);
-      toast.current?.show({
-        severity: 'success',
-        summary: 'Éxito',
-        detail: 'Rol asignado correctamente',
-        life: 3000,
-      });
-      loadUsuarios();
+      const rolesData = await rolService.findAll();
+      setRoles(rolesData);
+      setDisplayRoleDialog(true);
     } catch (error) {
-      toast.current?.show({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Error al asignar el rol',
-        life: 3000,
-      });
+      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Error al cargar los roles', life: 3000 });
     }
   };
+
+  const assignRole = async () => {
+    if (!editingUsuario.id || !selectedRole) return;
+    try {
+      await usuarioService.assignRole(editingUsuario.id, selectedRole.id);
+      toast.current?.show({ severity: 'success', summary: 'Éxito', detail: 'Rol asignado correctamente', life: 3000 });
+      setDisplayRoleDialog(false);
+      loadUsuarios();
+    } catch (error) {
+      toast.current?.show({ severity: 'error', summary: 'Error', detail: 'Error al asignar el rol', life: 3000 });
+    }
+  };
+
+
 
   const removeRole = async (usuarioId: number, roleId: number) => {
     try {
@@ -180,6 +190,14 @@ const Usuarios: React.FC = () => {
                 className="p-button-rounded p-button-info p-mr-2"
                 onClick={() => assignRole(rowData.id!, 2)}
               />
+
+              <Button
+                label="Asignar Rol"
+                icon="pi pi-users"
+                className="p-button-info"
+                onClick={() => openRoleDialog(rowData)}
+              />
+
               <Button
                 label="Remover Rol"
                 icon="pi pi-times-circle"
@@ -221,6 +239,18 @@ const Usuarios: React.FC = () => {
             // Requerido al crear; si se edita, se considera opcional (se actualiza solo si se ingresa)
             required={!editingUsuario.id}
           />
+        </div>
+      </Dialog>
+
+      {/* Diálogo para asignar roles */}
+      <Dialog visible={displayRoleDialog} header="Asignar Rol" onHide={() => setDisplayRoleDialog(false)}>
+        <div className="p-field">
+          <label htmlFor="rol">Selecciona un Rol</label>
+          <Dropdown id="rol" value={selectedRole} options={roles} optionLabel="nombre" onChange={(e) => setSelectedRole(e.value)} placeholder="Seleccione un rol" />
+        </div>
+        <div className="p-mt-3">
+          <Button label="Cancelar" icon="pi pi-times" className="p-button-text" onClick={() => setDisplayRoleDialog(false)} />
+          <Button label="Asignar" icon="pi pi-check" className="p-button-primary" onClick={assignRole} disabled={!selectedRole} />
         </div>
       </Dialog>
     </div>
